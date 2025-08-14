@@ -69,7 +69,14 @@ example : (p ∨ q) ∨ r ↔ p ∨ (q ∨ r) := by
 
 
 -- distributivity
-example : p ∧ (q ∨ r) ↔ (p ∧ q) ∨ (p ∧ r) := sorry
+example : p ∧ (q ∨ r) ↔ (p ∧ q) ∨ (p ∧ r) := by
+  constructor <;> intro <;> rename_i a <;> cases a
+  rename_i hqr <;> cases hqr
+  apply Or.inl; constructor <;> assumption
+  apply Or.inr; constructor <;> assumption
+  all_goals rename_i a <;> cases a <;> constructor <;> try assumption
+  apply Or.inl; assumption
+  apply Or.inr; assumption
 
 
 example : p ∨ (q ∧ r) ↔ (p ∨ q) ∧ (p ∨ r) := by
@@ -224,21 +231,26 @@ example : (p ∨ q) ∨ r ↔ p ∨ (q ∨ r) := by
 -- distributivity
 example : p ∧ (q ∨ r) ↔ (p ∧ q) ∨ (p ∧ r) := by
   constructor <;> intro h <;> cases h <;> rename_i a <;> cases a
-  rename_i hp hq; apply Or.inl; constructor <;> assumption
-  rename_i hp hr; apply Or.inr; constructor <;> assumption
+  apply Or.inl; constructor <;> assumption
+  apply Or.inr; constructor <;> assumption
   all_goals constructor <;> try assumption
   apply Or.inl; assumption
   apply Or.inr; assumption
 
 
-example : p ∨ (q ∧ r) ↔ (p ∨ q) ∧ (p ∨ r) := sorry
+example : p ∨ (q ∧ r) ↔ (p ∨ q) ∧ (p ∨ r) := by
+  constructor <;> intro <;> rename_i a <;> cases a
+  constructor <;> apply Or.inl <;> assumption
+  constructor <;> rename_i hqr <;> cases hqr <;> apply Or.inr <;> assumption
+  rename_i hpq hpr; cases hpq <;> cases hpr <;> try apply Or.inl <;> assumption
+  apply Or.inr <;> constructor <;> assumption
 
 
 -- other properties
 example : (p → (q → r)) ↔ (p ∧ q → r) := by
   constructor <;> intros
   rename_i hpqr hpq; cases hpq <;> apply hpqr <;> assumption
-  rename_i hpqr hp hq; apply hpqr <;> constructor <;> assumption
+  rename_i hpqr _ _; apply hpqr <;> constructor <;> assumption
 
 
 example : ((p ∨ q) → r) ↔ (p → r) ∧ (q → r) := by
@@ -251,12 +263,49 @@ example : ((p ∨ q) → r) ↔ (p → r) ∧ (q → r) := by
   apply b; assumption
 
 
-example : ¬(p ∨ q) ↔ ¬p ∧ ¬q := sorry
-example : ¬p ∨ ¬q → ¬(p ∧ q) := sorry
-example : ¬(p ∧ ¬p) := sorry
-example : p ∧ ¬q → ¬(p → q) := sorry
-example : ¬p → (p → q) := sorry
-example : (¬p ∨ q) → (p → q) := sorry
-example : p ∨ False ↔ p := sorry
-example : p ∧ False ↔ False := sorry
-example : (p → q) → (¬q → ¬p) := sorry
+example : ¬(p ∨ q) ↔ ¬p ∧ ¬q := by
+  constructor <;> repeat intro
+  constructor <;> intro
+  rename_i hp; have : p ∨ q := Or.inl hp; contradiction
+  rename_i hq; have : p ∨ q := Or.inr hq; contradiction
+  rename_i hnpnq hpq; cases hnpnq; cases hpq <;> contradiction
+
+
+example : ¬p ∨ ¬q → ¬(p ∧ q) := by
+  repeat intro
+  rename_i hnpnq hpq; cases hpq; cases hnpnq <;> contradiction
+
+
+example : ¬(p ∧ ¬p) := by
+  intro; rename_i hpnp; cases hpnp; contradiction
+
+
+example : p ∧ ¬q → ¬(p → q) := by
+  repeat intro
+  rename_i hpnq hpq; cases hpnq
+  rename_i hp _; have := hpq hp; contradiction
+
+
+example : ¬p → (p → q) := by
+  intros; contradiction
+
+
+example : (¬p ∨ q) → (p → q) := by
+  intros; rename_i hnpq _; cases hnpq; contradiction; assumption
+
+
+example : p ∨ False ↔ p := by
+  constructor <;> intro
+  rename_i hpf; cases hpf; assumption; contradiction
+  constructor; assumption
+
+
+example : p ∧ False ↔ False := by
+  constructor <;> intro
+  apply And.right <;> assumption
+  contradiction
+
+
+example : (p → q) → (¬q → ¬p) := by
+  repeat intro
+  rename_i hpq _ hp; have := hpq hp; contradiction
